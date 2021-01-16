@@ -1,1 +1,1 @@
-rm *.mp4 *.mp3
+rm *.mp4 *.mp3 *.png

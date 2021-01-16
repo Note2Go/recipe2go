@@ -9,7 +9,7 @@ from datetime import datetime
 logger = log_processor.get_logger("video_processor")
 media_folder = "../media/"
 source_video_file_name = "source_video.mp4"
-default_num_of_video_clip = 10
+default_num_of_video_clip = 14
 
 def get_youtube_video_name(url):
     logger.info("Start processing video from url({})".format(url))
@@ -33,6 +33,7 @@ def download_from_youtube(url):
     youtube = pytube.YouTube(url)
     video = youtube.streams.get_highest_resolution()
     logger.info('Video "{}" retrieved'.format(video.title))
+
 
     # download video
     download_start_time = datetime.now()
@@ -145,11 +146,11 @@ def clear_media():
 
 
 if __name__ == "__main__":
-    # test_url = "https://www.youtube.com/watch?v=eY90ltI8Sh8"
+    test_url = "https://www.youtube.com/watch?v=IwFpiywyjcE"
 
-    short_video_url = "https://www.youtube.com/watch?v=ww95zvvhX0c&list=PLfetWr5y3KmmAPUcfMnepril3nHDNTJ0a"
+    # short_video_url = "https://www.youtube.com/watch?v=ww95zvvhX0c&list=PLfetWr5y3KmmAPUcfMnepril3nHDNTJ0a"
     clear_media()
-    video_addr = download_from_youtube(short_video_url)
+    video_addr = download_from_youtube(test_url)
     print("Video addr = {}".format(video_addr))
     clip_addr = slice_video(video_addr)
     print("clip addr = {}".format(clip_addr))
