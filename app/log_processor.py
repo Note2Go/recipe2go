@@ -3,19 +3,22 @@ import os
 from datetime import datetime
 
 log_folder = '../logs/'
-date_format = '%Y_%m_%d_%H_%M_%S'
 log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 
-def get_logger(logger_name):
+def get_logger(current_session, current_task):
+
+    # set up the sub-folder for current session logs
+    current_session_folder = current_session+"/"
+    if not os.path.exists(log_folder+current_session_folder):
+        os.mkdir(log_folder+current_session_folder)
+
     # set up logger
-    logger = logging.getLogger(logger_name)
+    logger = logging.getLogger(current_task)
     logger.setLevel(logging.DEBUG)
 
     # set up file handler
-    current_time = datetime.now()
-    log_file_addr = current_time.strftime(date_format)+".log"
-    print(log_file_addr)
-    fh = logging.FileHandler(log_folder+log_file_addr)
+    log_file_addr = current_task+".log"
+    fh = logging.FileHandler(log_folder+current_session_folder+log_file_addr)
     fh.setLevel(logging.DEBUG)
 
     # set up console handler
@@ -33,7 +36,7 @@ def get_logger(logger_name):
 
     return logger
 
-
+# needs update
 def clear_log():
     log_files = []
 
