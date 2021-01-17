@@ -7,6 +7,7 @@ import hashlib
 from datetime import datetime
 from config import time_format, server_responses, server_log_file_name, url_hashing_character_count
 from media_processor import MediaProcessor
+import pdf_processor
 
 # set up logger
 current_time = datetime.now()
@@ -60,8 +61,9 @@ def extract_note(url, email):
     url_hash = get_hash(url)
     task_logger = log_processor.get_logger(current_session_time, url_hash)
     media_processor = MediaProcessor(url = url, hash=url_hash, logger=task_logger)
-    resources = media_processor.process_video()
-    print(resources)
+    title, resources = media_processor.process_video()
+    images_path = resources["images_path"]
+    pdf_processor.batch_convert_img2pdf(images_path)
     pass
 
 

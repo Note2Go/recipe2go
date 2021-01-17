@@ -21,3 +21,15 @@ server_responses = {
         400
     )
 }
+
+# media setting
+media_folder = "../media/"
+source_video_file_name = "source_video"
+default_num_of_video_clip = 3
+
+
+# email setting
+email_usrname = "thenote2go@gmail.com"
+email_password = "TheNote2Go"
+email_subject = "Your recipe is ready to go!"
+email_body = "Check out the attached pdf file for your recipe"

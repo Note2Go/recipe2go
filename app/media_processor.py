@@ -3,10 +3,8 @@ import log_processor
 import os
 from moviepy import editor
 from datetime import datetime
+from config import media_folder,source_video_file_name, default_num_of_video_clip
 
-media_folder = "../media/"
-source_video_file_name = "source_video"
-default_num_of_video_clip = 3
 
 
 class MediaProcessor:
@@ -37,7 +35,7 @@ class MediaProcessor:
         self._extract_audio()
         self._extract_images()
 
-        return self.resources
+        return self.title, self.resources
 
     def _download_video(self):
         # retrieve youtube video
