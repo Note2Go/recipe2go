@@ -22,6 +22,11 @@ server_responses = {
     )
 }
 
+# async worker setting
+celery_backend = 'redis://localhost:6379'
+celery_broker = 'redis://localhost:6379'
+
+
 # media setting
 media_folder = "../media/"
 source_video_file_name = "source_video"

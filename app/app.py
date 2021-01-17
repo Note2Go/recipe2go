@@ -5,11 +5,14 @@ import re
 import requests
 import hashlib
 from datetime import datetime
-from config import time_format, server_responses, server_log_file_name, url_hashing_character_count
+from config import time_format, server_responses, \
+    server_log_file_name, url_hashing_character_count,\
+    celery_backend, celery_broker
 from media_processor import MediaProcessor
-import pdf_processor
-import time
-import asyncio
+from pdf_processor import batch_convert_img2pdf
+from email_processor  import send_pdf
+from celery import Celery
+
 
 # set up logger
 current_time = datetime.now()
@@ -20,8 +23,11 @@ logger = log_processor.get_logger(current_session_time,server_log_file_name)
 app = Flask("recipe2go")
 api = Api(app)
 parser = reqparse.RequestParser()
-
-
+celery = Celery(
+        app.import_name,
+        backend=celery_backend,
+        broker=celery_broker
+    )
 logger.info("Flask server started")
 
 
@@ -42,30 +48,27 @@ class GetYouTubeTask(Resource):
             return server_responses["failed_post_url"]
         if not valid_email:
             return server_responses["failed_post_email"]
-
-
         logger.info("new request: url is {} and email is {}".format(url, email))
-        g["url"] = url
-        g["email"] = email
-        print("Asyn now")
+
+        # make an async call to process the video and proceed to return response
+        extract_note.delay(url, email)
         return server_responses["successful_post"]
 
     def get_argument(self):
+        # set up arguments needed in the parser
         parser.add_argument('url', type=str,
                             help="Please send a valid url of a YouTube Video that you wish to download ")
-
         parser.add_argument('email', type=str,
                             help="Please send your valid email address to receive the extracted note")
-        args = parser.parse_args()
 
+        # parse the arguments and return
+        args = parser.parse_args()
         return args
 
 api.add_resource(GetYouTubeTask,'/')
 
 
-
-
-
+# Helper methods
 def get_hash(s):
     hash_object = hashlib.sha512(s.encode())
     hash_hex = hash_object.hexdigest()
@@ -91,25 +94,26 @@ def check_email(email):
     regex_for_email = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
     return re.search(regex_for_email, email)
 
-@app.after_request
-def extract_note():
-    url = g.get("url")
-    email = g.get("email")
+# initiate the process of extracting notes
+@celery.task()
+def extract_note(url, email):
+
+    # start processing
     if url != None and email != None:
-        time.sleep(2)
-        print("I am still awake!")
-        print("new request: url is {} and email is {}".format(url, email))
+        logger.info("new request: url is {} and email is {}".format(url, email))
 
-    print("after request done")
-    # url_hash = get_hash(url)
-    # task_logger = log_processor.get_logger(current_session_time, url_hash)
-    # media_processor = MediaProcessor(url = url, hash=url_hash, logger=task_logger)
-    # title, resources = media_processor.process_video()
-    # images_path = resources["images_path"]
+    # create a hash for the video and use for logging
+    url_hash = get_hash(url)
+    task_logger = log_processor.get_logger(current_session_time, url_hash)
 
-    # pdf_processor.batch_convert_img2pdf(images_path)
+    # process the video to extract pdf slides from it
+    media_processor = MediaProcessor(url = url, hash=url_hash, logger=task_logger)
+    title, resources = media_processor.process_video()
+    images_path = resources["images_path"]
+    pdf_path = batch_convert_img2pdf(images_path)
 
-
+    # send the final pdf slide to user
+    send_pdf(email, pdf_path)
 
 
 if __name__ == '__main__':
