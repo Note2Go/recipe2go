@@ -7,10 +7,10 @@ import os
 import numpy
 import six
 
-    ingredients_list = ['chicken','pork','duck','salmon','beef', 'shrimp','tuna','lobster','lamb','pork belly','olive','green pepper','bak choy', 'peach', 'lemon', 'steak', 'soup', 'ribs', 'oxtails', 'Onion', 'carrots', 'celery', 
+ingredients_list = ['chicken','pork','duck','salmon','beef', 'shrimp','tuna','lobster','lamb','pork belly','olive','green pepper','bak choy', 'peach', 'lemon', 'steak', 'soup', 'ribs', 'oxtails', 'Onion', 'carrots', 'celery', 
     'tomato paste', 'vegetable', 'gravy', 'fat', 'parsley', 'herbs', 'garlic', 'potatoes', 'starch', 'fats', 'soy souce', 'vinegar',
      'kosher salt', 'spice', 'juices', 'crab', 'beans', 'ground beef', 'bacon fat', 'vessel.', 'bacon','bacon fat', 'vessel.', 'bacon', 'apple','pepper']
-    equipment_list = ['cup', 'cubes', 'cloves', 'spoon.', 'pan', 'cast iron', 'bowl']
+equipment_list = ['cup', 'cubes', 'cloves', 'spoon.', 'pan', 'cast iron', 'bowl']
 
 def get_text_from_video(video_id):
     
@@ -123,8 +123,8 @@ if __name__ == "__main__":
 
     divided_steps = divide_steps(transcript_list,time_frame_list)
     for step in divided_steps:
-#        print("This is step: " + str(counter))
- #       print(step)
+        print("This is step: " + str(counter))
+        print(step)
         counter+=1
     for item in transcript_list:
         text = item['text']
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     # Remove duplicates
     [ingredients.append(x) for x in temp_result if x not in ingredients]
     [equipments.append(x) for x in temp_result if x not in equipments]
-    # final filtering
+    # Final filtering
     for item in ingredients:
         if item in ingredients_list:
             ingredients_result.append(item)
