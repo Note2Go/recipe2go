@@ -1,7 +1,7 @@
+from google.cloud import vision
 def detect_properties_uri(uri):
     """Detects image properties in the file located in Google Cloud Storage or
     on the Web."""
-    from google.cloud import vision
     client = vision.ImageAnnotatorClient()
     image = vision.Image()
     image.source.image_uri = uri

@@ -1,19 +1,20 @@
 from youtube_transcript_api import YouTubeTranscriptApi
+from google.cloud import language_v1
 import argparse
 import io
 import json
 import os
-
-from google.cloud import language_v1
 import numpy
 import six
+
+    ingredients_list = ['chicken','pork','duck','salmon','beef', 'shrimp','tuna','lobster','lamb','pork belly','olive','green pepper','bak choy', 'peach', 'lemon', 'steak', 'soup', 'ribs', 'oxtails', 'Onion', 'carrots', 'celery', 
+    'tomato paste', 'vegetable', 'gravy', 'fat', 'parsley', 'herbs', 'garlic', 'potatoes', 'starch', 'fats', 'soy souce', 'vinegar',
+     'kosher salt', 'spice', 'juices', 'crab', 'beans', 'ground beef', 'bacon fat', 'vessel.', 'bacon','bacon fat', 'vessel.', 'bacon', 'apple','pepper']
+    equipment_list = ['cup', 'cubes', 'cloves', 'spoon.', 'pan', 'cast iron', 'bowl']
 
 def get_text_from_video(video_id):
     
     result = YouTubeTranscriptApi.get_transcript(video_id,languages=['de','en'])
-    #for item in result:
-    #    print(item)
-    
     return result
 
 
@@ -72,6 +73,7 @@ def analyze_entity_sentiment(text_content):
       text_content The text content to analyze
     """
 
+    ingredients = []
     client = language_v1.LanguageServiceClient()
 
     type_ = language_v1.Document.Type.PLAIN_TEXT
@@ -86,13 +88,17 @@ def analyze_entity_sentiment(text_content):
     for entity in response.entities:
         print(u"Representative name for the entity: {}".format(entity.name))
         # Get entity type, e.g. PERSON, LOCATION, ADDRESS, NUMBER, et al
-        print(u"Entity type: {}".format(language_v1.Entity.Type(entity.type_).name))
+        curr_type = language_v1.Entity.Type(entity.type_).name
+        print(u"Entity type: {}".format(curr_type))
         print(u"Salience score: {}".format(entity.salience))
         # Get the aggregate sentiment expressed for this entity in the provided document.
         sentiment = entity.sentiment
         print(u"Entity sentiment score: {}".format(sentiment.score))
         print(u"Entity sentiment magnitude: {}".format(sentiment.magnitude))
-
+        if(sentiment.score == 0.0 and sentiment.magnitude == 0.0 and entity.salience >= 0.0001 and curr_type == "OTHER"):
+            ingredients.append(entity.name)
+        if ((sentiment.magnitude + sentiment.score == 0.0 or sentiment.score - sentiment.magnitude == 0.0) and (curr_type == "COMMON" or curr_type == "OTHER") and entity.salience >= 0.001):
+            ingredients.append(entity.name)
         for metadata_name, metadata_value in entity.metadata.items():
             print(u"{} = {}".format(metadata_name, metadata_value))
 
@@ -104,7 +110,7 @@ def analyze_entity_sentiment(text_content):
             print(
                 u"Mention type: {}".format(language_v1.EntityMention.Type(mention.type_).name)
             )
-
+    return ingredients
     print(u"Language of the text: {}".format(response.language))
 
 if __name__ == "__main__":
@@ -114,19 +120,33 @@ if __name__ == "__main__":
     temp_text = ""
     counter = 1
     time_frame_list = [13,30,34,36,40,44,45,49,51,58,63,68,73,77,79,84,100,107,115,120,127,147,158,168,180,191,195,201,209,214,232,239,253,280]
-    print(len(time_frame_list))
-    divided_steps = divide_steps(transcript_list,time_frame_list)
 
+    divided_steps = divide_steps(transcript_list,time_frame_list)
     for step in divided_steps:
-        print("This is step: " + str(counter))
-        print(step)
+#        print("This is step: " + str(counter))
+ #       print(step)
         counter+=1
-"""
     for item in transcript_list:
         text = item['text']
         temp_text+= text
     
+        #result = classify_content(temp_text)
+    ingredients_result = []
+    equipments_result = []
+    ingredients = []
+    equipments = []
+    temp_result = analyze_entity_sentiment(temp_text)
+    # Remove duplicates
+    [ingredients.append(x) for x in temp_result if x not in ingredients]
+    [equipments.append(x) for x in temp_result if x not in equipments]
+    # final filtering
+    for item in ingredients:
+        if item in ingredients_list:
+            ingredients_result.append(item)
+    for item in equipments:
+        if item in equipment_list:
+            equipments_result.append(item)
+    print(ingredients_result)
+    print(equipments_result)
+
     
-        result = classify_content(temp_text)
-        analyze_entity_sentiment(temp_text)
-""" 
