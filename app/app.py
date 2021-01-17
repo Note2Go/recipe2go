@@ -1,15 +1,15 @@
-from flask import Flask
+from flask import Flask, g
 from flask_restful import Resource, Api, reqparse
 import log_processor
 import re
 import requests
 import hashlib
-from celery import Celery
 from datetime import datetime
 from config import time_format, server_responses, server_log_file_name, url_hashing_character_count
 from media_processor import MediaProcessor
 import pdf_processor
-
+import time
+import asyncio
 
 # set up logger
 current_time = datetime.now()
@@ -17,9 +17,10 @@ current_session_time = current_time.strftime(time_format)
 logger = log_processor.get_logger(current_session_time,server_log_file_name)
 
 # initialize the flask app
-app = Flask(__name__)
+app = Flask("recipe2go")
 api = Api(app)
 parser = reqparse.RequestParser()
+
 
 logger.info("Flask server started")
 
@@ -29,21 +30,24 @@ class GetYouTubeTask(Resource):
         return server_responses["successful_get"]
 
     def post(self):
+        # read arguments from request
         args = self.get_argument()
         url = args['url']
         email = args['email']
 
+        # validate parameters
         valid_url = check_url(url)
         valid_email = check_email(email)
-
         if not valid_url:
             return server_responses["failed_post_url"]
         if not valid_email:
             return server_responses["failed_post_email"]
 
-        print("url is {} and email is {}".format(url, email))
-        extract_note(url, email)
 
+        logger.info("new request: url is {} and email is {}".format(url, email))
+        g["url"] = url
+        g["email"] = email
+        print("Asyn now")
         return server_responses["successful_post"]
 
     def get_argument(self):
@@ -58,31 +62,8 @@ class GetYouTubeTask(Resource):
 
 api.add_resource(GetYouTubeTask,'/')
 
-def make_celery(app):
-    celery = Celery(
-        app.import_name,
-        backend=app.config['CELERY_RESULT_BACKEND'],
-        broker=app.config['CELERY_BROKER_URL']
-    )
-    celery.conf.update(app.config)
-
-    class ContextTask(celery.Task):
-        def __call__(self, *args, **kwargs):
-            with app.app_context():
-                return self.run(*args, **kwargs)
-
-    celery.Task = ContextTask
-    return celery
 
 
-def extract_note(url, email):
-    url_hash = get_hash(url)
-    task_logger = log_processor.get_logger(current_session_time, url_hash)
-    media_processor = MediaProcessor(url = url, hash=url_hash, logger=task_logger)
-    title, resources = media_processor.process_video()
-    images_path = resources["images_path"]
-    pdf_processor.batch_convert_img2pdf(images_path)
-    pass
 
 
 def get_hash(s):
@@ -109,6 +90,24 @@ def check_url(url):
 def check_email(email):
     regex_for_email = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
     return re.search(regex_for_email, email)
+
+@app.after_request
+def extract_note():
+    url = g.get("url")
+    email = g.get("email")
+    if url != None and email != None:
+        time.sleep(2)
+        print("I am still awake!")
+        print("new request: url is {} and email is {}".format(url, email))
+
+    print("after request done")
+    # url_hash = get_hash(url)
+    # task_logger = log_processor.get_logger(current_session_time, url_hash)
+    # media_processor = MediaProcessor(url = url, hash=url_hash, logger=task_logger)
+    # title, resources = media_processor.process_video()
+    # images_path = resources["images_path"]
+
+    # pdf_processor.batch_convert_img2pdf(images_path)
 
 
 
