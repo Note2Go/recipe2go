@@ -15,6 +15,10 @@ equipment_list = ['cup', 'cubes', 'cloves', 'spoon.', 'pan', 'cast iron', 'bowl'
 def get_text_from_video(video_id):
     
     result = YouTubeTranscriptApi.get_transcript(video_id,languages=['de','en'])
+     
+    # Remove Ads
+    for i in range(0,5):
+        result.remove(result[i])
     return result
 
 
@@ -48,10 +52,11 @@ def divide_steps(transcript_list, time_frame_list):
     curr = 0
     result = []
     temp_text = ""
-    while index < len(time_frame_list):
-    
+
+    print(time_frame_list)
+    while index < (len(time_frame_list)-1) :
         if transcript_list[curr]["start"] < time_frame_list[index]:
-            temp_text += transcript_list[curr]["text"]
+            temp_text += " " + transcript_list[curr]["text"]
             curr+=1;
             
         elif transcript_list[curr]["start"] >= time_frame_list[index]:
