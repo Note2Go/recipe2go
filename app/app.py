@@ -4,10 +4,12 @@ import log_processor
 import re
 import requests
 import hashlib
+from celery import Celery
 from datetime import datetime
 from config import time_format, server_responses, server_log_file_name, url_hashing_character_count
 from media_processor import MediaProcessor
 import pdf_processor
+
 
 # set up logger
 current_time = datetime.now()
@@ -56,6 +58,22 @@ class GetYouTubeTask(Resource):
 
 api.add_resource(GetYouTubeTask,'/')
 
+def make_celery(app):
+    celery = Celery(
+        app.import_name,
+        backend=app.config['CELERY_RESULT_BACKEND'],
+        broker=app.config['CELERY_BROKER_URL']
+    )
+    celery.conf.update(app.config)
+
+    class ContextTask(celery.Task):
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return self.run(*args, **kwargs)
+
+    celery.Task = ContextTask
+    return celery
+
 
 def extract_note(url, email):
     url_hash = get_hash(url)
@@ -71,7 +89,6 @@ def get_hash(s):
     hash_object = hashlib.sha512(s.encode())
     hash_hex = hash_object.hexdigest()
     return hash_hex[0:url_hashing_character_count]
-
 
 def check_url(url):
     if not (url.startswith("https://www.youtube.com/watch?v=")
