@@ -122,36 +122,4 @@ if __name__ == "__main__":
     video_id = "ztl0gGVFoK0&t"
 
     transcript_list = get_text_from_video(video_id)
-    temp_text = ""
-    counter = 1
-    time_frame_list = [13,30,34,36,40,44,45,49,51,58,63,68,73,77,79,84,100,107,115,120,127,147,158,168,180,191,195,201,209,214,232,239,253,280]
-
-    divided_steps = divide_steps(transcript_list,time_frame_list)
-    for step in divided_steps:
-        print("This is step: " + str(counter))
-        print(step)
-        counter+=1
-    for item in transcript_list:
-        text = item['text']
-        temp_text+= text
-    
-        #result = classify_content(temp_text)
-    ingredients_result = []
-    equipments_result = []
-    ingredients = []
-    equipments = []
-    temp_result = analyze_entity_sentiment(temp_text)
-    # Remove duplicates
-    [ingredients.append(x) for x in temp_result if x not in ingredients]
-    [equipments.append(x) for x in temp_result if x not in equipments]
-    # Final filtering
-    for item in ingredients:
-        if item in ingredients_list:
-            ingredients_result.append(item)
-    for item in equipments:
-        if item in equipment_list:
-            equipments_result.append(item)
-    print(ingredients_result)
-    print(equipments_result)
-
     
